@@ -1,38 +1,101 @@
 // Scaffold.cpp
 
 #include "provided.h"
+#include <vector>
+#include <string>
+#include <iostream>
 using namespace std;
 
 class ScaffoldImpl
 {
-  public:
-    ScaffoldImpl(int nColumns, int nLevels); 
-    int cols() const;
-    int levels() const;
-    int numberEmpty() const;
-    int checkerAt(int column, int level) const; 
-    void display() const; 
-    bool makeMove(int column, int color); 
-    int undoMove(); 
+    public:
+        ScaffoldImpl(int nColumns, int nLevels); 
+        int cols() const;
+        int levels() const;
+        int numberEmpty() const;
+        int checkerAt(int column, int level) const; 
+        void display() const; 
+        bool makeMove(int column, int color); 
+        int undoMove(); 
+    private:
+        int m_levels;
+        int m_cols;
+        vector<vector<char>> m_grid;
+        int m_gridLevels;
+        int m_gridCols;
 };
 
 ScaffoldImpl::ScaffoldImpl(int nColumns, int nLevels)
 {
+    //check valid scaffold
+    if (nColumns < 1 || nLevels < 1) {
+        cerr << "Cannot have negative number of columns/levels" << endl;
+        //exit(0);
+    }
+
+    //set member vars
+    m_cols = nColumns;
+    m_levels = nLevels;
+    m_gridCols = m_cols * 2 + 1;
+    m_gridLevels = m_levels + 1;
+
+    //resize grid
+    //if scaffold is 4 cols 3 levels, the grid has 0-8 cols and 0-3 levels, cols + 1 and levels + 1
+    m_grid.resize(m_gridLevels);  // grid now has M empty rows
+    for (int i = 0; i < m_gridLevels; i++) {
+        m_grid[i].resize(m_gridCols);  // row i now has N columns
+    }
+
+    //populate grid
+    //bottom row
+    for (int i = 0; i < m_gridCols; i++) {
+        if (i % 2 == 0) {
+            m_grid[0][i] = '+';
+        }
+        else {
+            m_grid[0][i] = '-';
+        }
+    }
+    
+    //rest of the rows
+    for (int i = 1; i < m_gridLevels; i++) {
+        for (int j = 0; j < m_gridCols; j++) {
+            if (j % 2 == 0) {
+                m_grid[i][j] = '|';
+            }
+            else {
+                m_grid[i][j] = ' ';
+            }
+        }
+    }
+
+    cerr << "scaffold made" << endl;
+
 }
 
 int ScaffoldImpl::cols() const
 {
-    return 1;  //  This is not always correct; it's just here to compile
+    return m_cols;
 }
 
 int ScaffoldImpl::levels() const
 {
-    return 1;  //  This is not always correct; it's just here to compile
+    return m_levels;
 }
 
 int ScaffoldImpl::numberEmpty() const
 {
-    return 1;  //  This is not always correct; it's just here to compile
+    int numEmpty = 0;
+
+    for (int i = 1; i < m_gridLevels; i++) {
+        for (int j = 0; j < m_gridCols; j++) {
+            if (m_grid[i][j] == ' ') {
+                numEmpty++;
+            }
+        }
+    }
+
+    return numEmpty;
 }
 
 int ScaffoldImpl::checkerAt(int column, int level) const
@@ -42,6 +105,14 @@ int ScaffoldImpl::checkerAt(int column, int level) const
 
 void ScaffoldImpl::display() const
 {
+    for (int i = m_levels; i >= 0; i--) {
+        
+        for (int j = 0; j < m_gridCols; j++) {
+            cout << m_grid[i][j];
+        }
+        
+        cout << endl;
+    }
 }
 
 bool ScaffoldImpl::makeMove(int column, int color)
@@ -61,7 +132,7 @@ int ScaffoldImpl::undoMove()
 
 Scaffold::Scaffold(int nColumns, int nLevels)
 {
-    m_impl = new ScaffoldImpl(nColumns, nLevels);
+    m_impl = new ScaffoldImpl(nColumns, nLevels); //maybe add code to terminate if its not postive
 }
  
 Scaffold::~Scaffold()

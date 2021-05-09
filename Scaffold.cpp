@@ -2,6 +2,7 @@
 
 #include "provided.h"
 #include <vector>
+#include <stack>
 #include <string>
 #include <iostream>
 using namespace std;
@@ -23,12 +24,14 @@ class ScaffoldImpl
         vector<vector<char>> m_grid;
         int m_gridLevels;
         int m_gridCols;
+        stack<int> m_moveColor; //CONSIDER GETTING RID OF THIS ONE IM NOT USING IT ATM
+        stack<int> m_moveColumn;
 };
 
 ScaffoldImpl::ScaffoldImpl(int nColumns, int nLevels)
 {
     //check valid scaffold
-    if (nColumns < 1 || nLevels < 1) {
+    if (nColumns < 0 || nLevels < 0) {
         cerr << "Cannot have negative number of columns/levels" << endl;
         //exit(0);
     }
@@ -69,7 +72,7 @@ ScaffoldImpl::ScaffoldImpl(int nColumns, int nLevels)
         }
     }
 
-    cerr << "scaffold made" << endl;
+    //cerr << "scaffold made" << endl;
 
 }
 
@@ -87,6 +90,7 @@ int ScaffoldImpl::numberEmpty() const
 {
     int numEmpty = 0;
 
+    //go through grid. if there is a space, it is empty
     for (int i = 1; i < m_gridLevels; i++) {
         for (int j = 0; j < m_gridCols; j++) {
             if (m_grid[i][j] == ' ') {
@@ -100,6 +104,22 @@ int ScaffoldImpl::numberEmpty() const
 
 int ScaffoldImpl::checkerAt(int column, int level) const
 {
+    //check valid coordinate
+    if (column < 0 || column > m_cols || level < 0 || level > m_levels) {
+        return VACANT;
+    }
+
+    //if red return red
+    if (m_grid[level][column * 2 - 1] == 'R') {
+        return RED;
+    }
+
+    //if black return black
+    if (m_grid[level][column * 2 - 1] == 'B') {
+        return BLACK;
+    }
+
+    //empty return vacant
     return VACANT;  //  This is not always correct; it's just here to compile
 }
 
@@ -115,14 +135,68 @@ void ScaffoldImpl::display() const
     }
 }
 
+//use a stack of moves to track moves
 bool ScaffoldImpl::makeMove(int column, int color)
 {
-    return false;  //  This is not always correct; it's just here to compile
+    //if column is valid range
+    if (column < 1 || column > m_cols) {
+        return false;
+    }
+
+    //if column is full
+    bool colFull = true;
+    int levelAdd = -1;
+    for (int i = 1; i < m_levels; i++) {
+        if (!checkerAt(column, i)) {
+            colFull = false;
+            levelAdd = i;
+            break;
+        }
+    }
+
+    if (colFull) {
+        return false;
+    }
+
+    //if color is valid
+    if (color != RED && color != BLACK) {
+        return false;
+    }
+
+    //update the grid
+    if (color == RED) {
+        m_grid[levelAdd][column * 2 - 1] = 'R';
+    } 
+
+    if (color == BLACK) {
+        m_grid[levelAdd][column * 2 - 1] = 'B';
+    }
+
+    //push to stack
+    m_moveColor.push(color);
+    m_moveColumn.push(column);
+
+    return true;  
 }
 
+//use a stack of moves to track moves
 int ScaffoldImpl::undoMove()
 {
-    return 0;  //  This is not always correct; it's just here to compile
+    if (!m_moveColumn.empty()) {
+        int col = m_moveColumn.top();
+        m_moveColumn.pop();
+        m_moveColor.pop();
+
+        for (int i = m_levels; i >= 1; i--) {
+            if (checkerAt(col, i)) {
+                m_grid[i][col * 2 - 1] = ' ';
+            }
+        }
+
+        return col;
+    }
+    
+    return 0; 
 }
 
 //******************** Scaffold functions *******************************

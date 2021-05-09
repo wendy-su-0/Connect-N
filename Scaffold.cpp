@@ -90,7 +90,7 @@ int ScaffoldImpl::numberEmpty() const
 {
     int numEmpty = 0;
 
-    //go through grid. if there is a space, it is empty
+    //go through grid. if there is a space, it is empty, add to numEmpty
     for (int i = 1; i < m_gridLevels; i++) {
         for (int j = 0; j < m_gridCols; j++) {
             if (m_grid[i][j] == ' ') {
@@ -120,13 +120,15 @@ int ScaffoldImpl::checkerAt(int column, int level) const
     }
 
     //empty return vacant
-    return VACANT;  //  This is not always correct; it's just here to compile
+    return VACANT; 
 }
 
 void ScaffoldImpl::display() const
 {
+    //prints grid level by level from the top down
     for (int i = m_levels; i >= 0; i--) {
         
+        //print columns from left to right
         for (int j = 0; j < m_gridCols; j++) {
             cout << m_grid[i][j];
         }
@@ -143,17 +145,23 @@ bool ScaffoldImpl::makeMove(int column, int color)
         return false;
     }
 
-    //if column is full
+    //check if column is full
     bool colFull = true;
     int levelAdd = -1;
+
+    //start at the bottom of grid where checkers can be and go up
     for (int i = 1; i < m_levels; i++) {
-        if (!checkerAt(column, i)) {
+        //if there isn't a checker at that level
+        if (m_grid[i][column*2 - 1] == ' ') {
+            //column is not full
             colFull = false;
+            //the empty level is now i
             levelAdd = i;
             break;
         }
     }
 
+    //if the column is full
     if (colFull) {
         return false;
     }
@@ -182,13 +190,20 @@ bool ScaffoldImpl::makeMove(int column, int color)
 //use a stack of moves to track moves
 int ScaffoldImpl::undoMove()
 {
+    //if the stack is not empty
     if (!m_moveColumn.empty()) {
+        //get the top of the column stack
         int col = m_moveColumn.top();
+
+        //remove the top of the color and column stacks
         m_moveColumn.pop();
         m_moveColor.pop();
 
+        //start at the top of levels and go down from there
         for (int i = m_levels; i >= 1; i--) {
-            if (checkerAt(col, i)) {
+            //if there is a checker at that row and and column
+            if (m_grid[i][col*2 - 1] != ' ') {
+                //make the space blank to undo move
                 m_grid[i][col * 2 - 1] = ' ';
             }
         }
@@ -196,6 +211,7 @@ int ScaffoldImpl::undoMove()
         return col;
     }
     
+    //if stack is empty, return 0
     return 0; 
 }
 

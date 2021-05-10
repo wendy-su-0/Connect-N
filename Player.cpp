@@ -24,12 +24,30 @@ class SmartPlayerImpl
 
 int HumanPlayerImpl::chooseMove(const Scaffold& s, int N, int color)
 {
+    
     return 0;  //  This is not always correct; it's just here to compile
 }
 
 int BadPlayerImpl::chooseMove(const Scaffold& s, int N, int color)
 {
-    return 0;  //  This is not always correct; it's just here to compile
+    int col = 0;
+
+    //go through the grid left to right, bottom to top
+    for (int i = 1; i <= s.levels(); i++) {
+        for (int j = 1; j <= s.cols(); j++) {
+            //once it encounters first empty, choose to add a checker in that col
+            if (s.checkerAt(j, i) == VACANT) {
+                col = j;
+                break;
+            }
+        }
+
+        if (col != 0) {
+            break;
+        }
+    }
+
+    return col;
 }
 
 int SmartPlayerImpl::chooseMove(const Scaffold& s, int N, int color)

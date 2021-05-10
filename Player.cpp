@@ -2,6 +2,7 @@
 
 #include "provided.h"
 #include <string>
+#include <iostream>
 using namespace std;
 
 class HumanPlayerImpl
@@ -24,8 +25,25 @@ class SmartPlayerImpl
 
 int HumanPlayerImpl::chooseMove(const Scaffold& s, int N, int color)
 {
-    
-    return 0;  //  This is not always correct; it's just here to compile
+    int col = 0;
+
+    //check if the grid is empty
+    if (s.numberEmpty() != 0) {
+        //ask user for column
+        cout << "Choose your column:" << endl;
+        int testCol;
+        cin >> testCol;
+
+        //ceck to see if the prompted col is inbounds and able to take in another checker
+        while (testCol < 1 || testCol > s.cols() || s.checkerAt(testCol, s.levels()) != VACANT) {
+            cout << "Invalid column. Choose again" << endl;
+            cin >> testCol;
+        }
+
+        col = testCol;
+    }
+
+    return col;  //  This is not always correct; it's just here to compile
 }
 
 int BadPlayerImpl::chooseMove(const Scaffold& s, int N, int color)

@@ -19,6 +19,7 @@ private:
     int nToWin;
     int m_winner;
     bool redTurn;
+    int m_turn;
 };
 
 GameImpl::GameImpl(int nColumns, int nLevels, int N, Player* red, Player* black)
@@ -28,6 +29,7 @@ GameImpl::GameImpl(int nColumns, int nLevels, int N, Player* red, Player* black)
     m_black = black;
     nToWin = N;
     redTurn = true;
+    m_turn = 0;
 }
 
 bool GameImpl::completed(int& winner) const
@@ -38,11 +40,12 @@ bool GameImpl::completed(int& winner) const
         return true;
     }
     //if N of the game is 1, it is red winner 
-    if (nToWin == 1) {
+    if (nToWin == 1 && m_turn == 1) {
         winner = RED;
         return true;
     }
 
+    //if the board is empty, game is not complete
      
     //if N is more than either the columns or levels, game cannot be a win
     if (nToWin > s->cols() || nToWin > s->levels()) {
@@ -51,29 +54,122 @@ bool GameImpl::completed(int& winner) const
         if (s->numberEmpty() == 0) {
             return true;
         }
-    } //standard checking the other ones because there is potential to be a win
-    else {
-        //if there is a win, return true
-        //chck horizontal
-        int count = 0;
-        for (int i = 1; i < s->levels(); i++) {
-            for (int j = 1; j < s->cols(); j++) {
 
+        return false;
+    } //standard checking the other ones because there is potential to be a win
+    
+    //if there is a win, return true
+    //chck horizontal
+    int count = 0;
+
+    //levels because we won't go off edge
+    for (int i = 1; i <= s->levels(); i++) {
+        //< because we will always access the j + 1 until j + 1 + n is the edge of cols  so don't want to go off edge
+        for (int j = 1; j <= s->cols() - nToWin + 1; j++) {
+            //check to see if there is a checker otherwise, go to next column
+            if (s->checkerAt(j, i) != VACANT) {
+                //check to see if they are consecutive checker colors for a count of N
+                for (int n = 0; n <= nToWin; n++) {
+                    if (s->checkerAt(j, i) == s->checkerAt(j + 1, i)) {
+                        count++;
+
+                        //if count is same as nToWin, set winner and return trie
+                        if (count == nToWin) {
+                            winner = s->checkerAt(j, i);
+                            return true;
+                        }
+                    }
+                    else {
+                        count = 0;
+                    }
+                }
             }
         }
     }
 
-    //check horizontal
-    //if N is larger than numer of columns, can't be horizontal
+    count = 0;
 
     //check vertical
-    //if N is larger than number of levels, can't be veritcal
+    //j are cols, i are levels
+    for (int j = 1; j <= s->cols(); j++) {
+        //because we will always access the i + 1 until i + 1 + n is the top of levels so don't want to go off edge
+        for (int i = 1; i <= s->levels() - nToWin + 1; i++) {
+            //check to see if there is a checker otherwise, go to next column
+            if (s->checkerAt(j, i) != VACANT) {
+                //check to see if they are consecutive checker colors for a count of N
+                for (int n = 0; n <= nToWin; n++) {
+                    if (s->checkerAt(j, i) == s->checkerAt(j, i + 1)) {
+                        count++;
 
-    //check diagonal
-    //if N is larger than either no columns or levels, can't be diagonal
+                        //if count is same as nToWin, set winner and return trie
+                        if (count == nToWin) {
+                            winner = s->checkerAt(j, i);
+                            return true;
+                        }
+                    }
+                    else {
+                        count = 0;
+                    }
+                }
+            }
+        }
+    }
 
-    //if the scaffold is full, game over
+    count = 0;
+
+    //check diagonal from bottom left to top right
+    for (int j = 1; j <= s->cols() - nToWin + 1; j++) {
+        //because we will always access the i + 1 until i + 1 + n is the top of levels so don't want to go off edge
+        for (int i = 1; i <= s->levels() - nToWin + 1; i++) {
+            //check to see if there is a checker otherwise, go to next column
+            if (s->checkerAt(j, i) != VACANT) {
+                //check to see if they are consecutive checker colors for a count of N
+                for (int n = 0; n <= nToWin; n++) {
+                    if (s->checkerAt(j, i) == s->checkerAt(j + 1, i + 1)) {
+                        count++;
+
+                        //if count is same as nToWin, set winner and return trie
+                        if (count == nToWin) {
+                            winner = s->checkerAt(j, i);
+                            return true;
+                        }
+                    }
+                    else {
+                        count = 0;
+                    }
+                }
+            }
+        }
+    }
+
+    //check diagonal from top left to bottom right
+    for (int j = 1; j <= s->cols() - nToWin + 1; j++) {
+        //because we will always access the i + 1 until i + 1 + n is the top of levels so don't want to go off edge
+        for (int i = s->levels(); i >= s->levels() - nToWin + 1; i++) {
+            //check to see if there is a checker otherwise, go to next column
+            if (s->checkerAt(j, i) != VACANT) {
+                //check to see if they are consecutive checker colors for a count of N
+                for (int n = 0; n <= nToWin; n++) {
+                    if (s->checkerAt(j, i) == s->checkerAt(j + 1, i - 1)) {
+                        count++;
+
+                        //if count is same as nToWin, set winner and return trie
+                        if (count == nToWin) {
+                            winner = s->checkerAt(j, i);
+                            return true;
+                        }
+                    }
+                    else {
+                        count = 0;
+                    }
+                }
+            }
+        }
+    }
+
+    //if the scaffold is full, game over and tie because no winner was decalred earlier
     if (s->numberEmpty() == 0) {
+        winner = TIE_GAME;
         return true;
     }
 
@@ -106,6 +202,9 @@ bool GameImpl::takeTurn()
 
     //switch player turn
     redTurn = !redTurn;
+
+    //add to turn counter
+    m_turn++;
 
     return true; 
 }

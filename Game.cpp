@@ -1,6 +1,7 @@
 // Game.cpp
 
 #include "provided.h"
+#include <string>
 #include <iostream>
 using namespace std;
 
@@ -30,12 +31,16 @@ GameImpl::GameImpl(int nColumns, int nLevels, int N, Player* red, Player* black)
     nToWin = N;
     redTurn = true;
     m_turn = 0;
+    m_winner = BLACK;
 }
 
 bool GameImpl::completed(int& winner) const
 {
+    cerr << winner << endl;
+    //cout << "test completion" << endl;
     //if N of the game is less than 1 it is a tie game because invalid
     if (nToWin < 1) {
+        cout << "invalid n" << endl;
         winner = TIE_GAME;
         return true;
     }
@@ -49,6 +54,7 @@ bool GameImpl::completed(int& winner) const
      
     //if N is more than either the columns or levels, game cannot be a win
     if (nToWin > s->cols() || nToWin > s->levels()) {
+        cout << "n too large" << endl;
         winner = TIE_GAME;
         //if it is full return true
         if (s->numberEmpty() == 0) {
@@ -60,34 +66,36 @@ bool GameImpl::completed(int& winner) const
     
     //if there is a win, return true
     //chck horizontal
-    int count = 0;
-
-    //levels because we won't go off edge
+    int count = 1;
     for (int i = 1; i <= s->levels(); i++) {
         //< because we will always access the j + 1 until j + 1 + n is the edge of cols  so don't want to go off edge
         for (int j = 1; j <= s->cols() - nToWin + 1; j++) {
-            //check to see if there is a checker otherwise, go to next column
-            if (s->checkerAt(j, i) != VACANT) {
-                //check to see if they are consecutive checker colors for a count of N
-                for (int n = 0; n <= nToWin; n++) {
-                    if (s->checkerAt(j, i) == s->checkerAt(j + 1, i)) {
+
+            for (int n = 0; n < nToWin; n++) {
+                //check to see if there is a checker otherwise, go to next column
+                if (checkerAt(j + n, i) != VACANT) {
+                    if (checkerAt(j + n, i) == checkerAt(j + 1 + n, i)) {
                         count++;
 
                         //if count is same as nToWin, set winner and return trie
                         if (count == nToWin) {
-                            winner = s->checkerAt(j, i);
+                            winner = checkerAt(j + n, i);
                             return true;
                         }
                     }
                     else {
-                        count = 0;
+                        count = 1;
                     }
+                }
+                else {
+                    count = 1;
+                    break;
                 }
             }
         }
     }
 
-    count = 0;
+    count = 1;
 
     //check vertical
     //j are cols, i are levels
@@ -95,73 +103,92 @@ bool GameImpl::completed(int& winner) const
         //because we will always access the i + 1 until i + 1 + n is the top of levels so don't want to go off edge
         for (int i = 1; i <= s->levels() - nToWin + 1; i++) {
             //check to see if there is a checker otherwise, go to next column
-            if (s->checkerAt(j, i) != VACANT) {
-                //check to see if they are consecutive checker colors for a count of N
-                for (int n = 0; n <= nToWin; n++) {
-                    if (s->checkerAt(j, i) == s->checkerAt(j, i + 1)) {
+            for (int n = 0; n < nToWin; n++) {
+                if (checkerAt(j, i + n) != VACANT) {
+                    if (checkerAt(j, i + n) == checkerAt(j, i + 1 + n)) {
                         count++;
 
                         //if count is same as nToWin, set winner and return trie
                         if (count == nToWin) {
-                            winner = s->checkerAt(j, i);
+                            winner = s->checkerAt(j, i + n);
                             return true;
                         }
                     }
                     else {
-                        count = 0;
+                        count = 1;
                     }
                 }
+                else {
+                    count = 1;
+                    break;
+                }
             }
+            
         }
     }
 
-    count = 0;
+    count = 1;
 
     //check diagonal from bottom left to top right
     for (int j = 1; j <= s->cols() - nToWin + 1; j++) {
         //because we will always access the i + 1 until i + 1 + n is the top of levels so don't want to go off edge
         for (int i = 1; i <= s->levels() - nToWin + 1; i++) {
-            //check to see if there is a checker otherwise, go to next column
-            if (s->checkerAt(j, i) != VACANT) {
-                //check to see if they are consecutive checker colors for a count of N
-                for (int n = 0; n <= nToWin; n++) {
-                    if (s->checkerAt(j, i) == s->checkerAt(j + 1, i + 1)) {
+            
+            for (int n = 0; n < nToWin; n++) {
+                //check to see if there is a checker otherwise, go to next column
+                if (s->checkerAt(j + n, i + n) != VACANT) {
+                    if (s->checkerAt(j + n, i + n) == s->checkerAt(j + n + 1, i + n + 1)) {
                         count++;
 
                         //if count is same as nToWin, set winner and return trie
                         if (count == nToWin) {
-                            winner = s->checkerAt(j, i);
+                            winner = s->checkerAt(j + n, i + n);
                             return true;
                         }
                     }
                     else {
-                        count = 0;
+                        count = 1;
                     }
+                }
+                else {
+                    count = 1;
+                    break;
                 }
             }
         }
     }
 
+    count = 1;
+
     //check diagonal from top left to bottom right
     for (int j = 1; j <= s->cols() - nToWin + 1; j++) {
         //because we will always access the i + 1 until i + 1 + n is the top of levels so don't want to go off edge
-        for (int i = s->levels(); i >= s->levels() - nToWin + 1; i++) {
-            //check to see if there is a checker otherwise, go to next column
-            if (s->checkerAt(j, i) != VACANT) {
-                //check to see if they are consecutive checker colors for a count of N
-                for (int n = 0; n <= nToWin; n++) {
-                    if (s->checkerAt(j, i) == s->checkerAt(j + 1, i - 1)) {
+        for (int i = s->levels(); i >= nToWin; i--) {
+            for (int n = 0; n < nToWin; n++) {
+                cerr << "print count: " << count << endl;
+                cerr << "j is: " << j + n << ". i is: " << i - n << endl;
+                cerr << "checker at is: " << checkerAt(j + n, i - n) << endl;
+                //check to see if there is a checker otherwise, go to next column
+                if (s->checkerAt(j + n, i - n) != VACANT) {
+                    //check to see if they are consecutive checker colors for a count of N
+                    if (s->checkerAt(j + n, i - n) == s->checkerAt(j + n + 1, i - n - 1)) {
                         count++;
 
-                        //if count is same as nToWin, set winner and return trie
+                        //if count is same as nToWin, set winner and return true
                         if (count == nToWin) {
-                            winner = s->checkerAt(j, i);
+                            winner = s->checkerAt(j + n, i - n);
+                            cout << "winner is" << winner << endl;
                             return true;
                         }
                     }
                     else {
-                        count = 0;
+                        count = 1;
                     }
+
+                }
+                else {
+                    count = 1;
+                    break;
                 }
             }
         }
@@ -169,18 +196,20 @@ bool GameImpl::completed(int& winner) const
 
     //if the scaffold is full, game over and tie because no winner was decalred earlier
     if (s->numberEmpty() == 0) {
+        cout << "scaffold full" << endl;
         winner = TIE_GAME;
         return true;
     }
 
+    cerr << winner << endl;
     return false;  //  This is not always correct; it's just here to compile
 }
 
 bool GameImpl::takeTurn()
 {
-    if (completed(m_winner)) {
+    /*if (completed(m_winner)) {
         return false;
-    }
+    }*/
 
     //steps for red player turn
     if (redTurn) {
@@ -217,16 +246,14 @@ void GameImpl::play()
         if (!m_red->isInteractive() && !m_black->isInteractive()) {
             cout << "Press ENTER to continue to next turn." << endl;
             cin.ignore(10000, '\n');
-            takeTurn();
-            s->display();
         }
-        else {
-            takeTurn();
-            s->display();
-        }
+
+        takeTurn();
+        s->display();
         //play steps: take turn, display grid
 
     }
+
 
     //when game is complete, check who is winner
     switch (m_winner) {
@@ -234,8 +261,8 @@ void GameImpl::play()
             cout << "Red is the winner! Played by " << m_red->name() << endl;
             break;
         case BLACK:
+            cout << "Black is the winner! Played by " << m_black->name() << endl;
             break;
-            cout << "Black is the winner! Payed by " << m_black->name() << endl;
         case TIE_GAME:
             cout << "This was a tie game" << endl;
             break;
